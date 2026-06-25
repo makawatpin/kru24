@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบบันทึกการออมเงินของนักเรียน</title>
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ออมเงิน">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="20" fill="#38B59B"/>
+    <text x="50" y="68" font-size="52" font-family="sans-serif" font-weight="700" fill="#fff" text-anchor="middle">฿</text>
+  </svg>
+</template>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;background:#F4F1E9;}
+    input,button,textarea{font-family:inherit;}
+    button{cursor:pointer;}
+    input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+    input[type=number]{-moz-appearance:textfield;}
+    ::-webkit-scrollbar{height:8px;width:8px;}
+    ::-webkit-scrollbar-thumb{background:#D8D0BF;border-radius:8px;}
+    @keyframes pop{0%{transform:scale(.85);}60%{transform:scale(1.06);}100%{transform:scale(1);}}
+  </style>
+  <script src="./xlsx-export.js"></script>
+  <script src="./savings-template-data.js"></script>
+  <script src="./xlsx-template.js"></script>
+</helmet>
+
+<sc-if value="{{ showLoading }}" hint-placeholder-val="{{ true }}">
+  <div style="min-height:100vh;background:#F4F1E9;display:flex;align-items:center;justify-content:center;font-family:Sarabun,sans-serif;">
+    <div style="text-align:center;">
+      <div style="width:64px;height:64px;border-radius:20px;background:#38B59B;display:flex;align-items:center;justify-content:center;font-family:Mali;font-weight:700;font-size:32px;color:#fff;margin:0 auto 18px;">฿</div>
+      <div style="font-size:16px;color:#8A968F;font-weight:500;">กำลังเชื่อมต่อ…</div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:100vh;background:#F4F1E9;font-family:Sarabun,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div style="background:#fff;border-radius:24px;padding:36px 28px 32px;max-width:360px;width:100%;box-shadow:0 4px 24px rgba(60,80,70,.10);text-align:center;">
+      <div style="width:64px;height:64px;border-radius:20px;background:#38B59B;display:flex;align-items:center;justify-content:center;font-family:Mali;font-weight:700;font-size:32px;color:#fff;margin:0 auto 18px;">฿</div>
+      <div style="font-family:Mali;font-weight:700;font-size:22px;margin-bottom:6px;">บันทึกการออมเงิน</div>
+      <div style="font-size:14px;color:#8A968F;margin-bottom:24px;">กรุณากรอกรหัสลับห้องเรียน</div>
+      <input id="pin-input" type="password" inputmode="numeric" maxlength="8" value="{{ pinInput }}" onChange="{{ onPinInput }}" onKeyDown="{{ onPinKey }}" placeholder="● ● ● ●" style="width:100%;border:2px solid #E4DCC9;border-radius:14px;padding:14px;font-size:26px;letter-spacing:8px;text-align:center;color:#2C3A38;background:#FCFAF4;outline:none;margin-bottom:10px;" />
+      <div style="{{ pinErrorStyle }}">{{ pinError }}</div>
+      <button onClick="{{ submitLogin }}" style="width:100%;border:none;background:#38B59B;color:#fff;border-radius:14px;padding:14px;font-size:16px;font-weight:700;font-family:Sarabun;margin-top:8px;">เข้าใช้งาน</button>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ showApp }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh;background:#F4F1E9;font-family:Sarabun,sans-serif;color:#2C3A38;padding-bottom:96px;">
+
+  <div style="position:sticky;top:0;z-index:30;background:rgba(244,241,233,.94);backdrop-filter:blur(10px);border-bottom:1px solid #E7E0D2;">
+    <div style="max-width:1120px;margin:0 auto;padding:11px 16px;display:flex;align-items:center;gap:12px;">
+      <div style="{{ logoStyle }}">฿</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:Mali;font-weight:700;font-size:18px;line-height:1.15;">บันทึกการออมเงิน</div>
+        <div style="font-size:12.5px;color:#8A968F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ schoolLine }}</div>
+      </div>
+      <sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:5px;background:#EDE7D9;padding:4px;border-radius:999px;">
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="4">
+            <button onClick="{{ n.select }}" style="{{ n.topStyle }}">{{ n.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+      <button onClick="{{ onExport }}" style="{{ exportStyle }}">
+        <span style="font-size:15px;">⤓</span><span>{{ exportTopLabel }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:16px;">
+
+    <!-- ===================== DAILY ===================== -->
+    <sc-if value="{{ isDaily }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="daily">
+        <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;">
+          <sc-for list="{{ monthChips }}" as="mc" hint-placeholder-count="11">
+            <button onClick="{{ mc.select }}" style="{{ mc.style }}">{{ mc.short }}</button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;gap:6px;overflow-x:auto;padding:2px 2px 12px;">
+          <sc-for list="{{ dayStrip }}" as="d" hint-placeholder-count="31">
+            <button onClick="{{ d.select }}" style="{{ d.style }}">
+              <span style="font-size:11px;opacity:.85;">{{ d.wd }}</span>
+              <span style="font-size:17px;font-weight:700;line-height:1;">{{ d.day }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:6px 2px 14px;">
+          <div>
+            <div style="font-family:Mali;font-weight:600;font-size:21px;line-height:1.1;">{{ dayHeading }}</div>
+            <div style="font-size:13.5px;color:#8A968F;margin-top:2px;">รวมเงินออมวันนี้ <b style="color:#2E7D6B;">{{ dayTotalLabel }}</b></div>
+          </div>
+          <button onClick="{{ toggleHoliday }}" style="{{ holidayBtnStyle }}">{{ holidayBtnLabel }}</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;background:#FBF8F0;border:1px dashed #DCD3C0;border-radius:14px;padding:9px 12px;margin-bottom:14px;">
+          <span style="font-size:13px;color:#8A968F;white-space:nowrap;">ลัดทั้งห้อง</span>
+          <div style="display:flex;gap:6px;flex:1;">
+            <button onClick="{{ all5 }}" style="{{ chipMint }}">+5</button>
+            <button onClick="{{ all10 }}" style="{{ chipSky }}">+10</button>
+            <button onClick="{{ all20 }}" style="{{ chipPeach }}">+20</button>
+          </div>
+          <button onClick="{{ clearDay }}" style="border:none;background:transparent;color:#B79088;font-size:13px;font-weight:600;padding:6px;">ล้างวันนี้</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ dailyRows }}" as="row" hint-placeholder-count="13">
+            <div style="background:#fff;border-radius:18px;padding:13px 15px;box-shadow:0 1px 3px rgba(60,70,60,.06);">
+              <div style="display:flex;align-items:center;gap:11px;">
+                <div style="width:28px;height:28px;border-radius:9px;background:#F1ECDE;color:#9AA28C;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ row.no }}</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:15.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ row.name }}</div>
+                  <div style="font-size:12px;color:#9AA6A2;">สะสมถึงเดือนนี้ {{ row.monthTotalLabel }}</div>
+                </div>
+                <div style="{{ row.amtStyle }}">{{ row.amtLabel }}</div>
+              </div>
+              <div style="display:flex;gap:7px;margin-top:11px;">
+                <button onClick="{{ row.add5 }}" style="{{ chipMint }}">5</button>
+                <button onClick="{{ row.add10 }}" style="{{ chipSky }}">10</button>
+                <button onClick="{{ row.add20 }}" style="{{ chipPeach }}">20</button>
+                <input type="number" inputmode="numeric" value="{{ row.amtStr }}" onChange="{{ row.setAmt }}" placeholder="ระบุ" style="width:62px;text-align:center;border:1.5px solid #E4DCC9;border-radius:11px;padding:8px 4px;font-size:15px;font-weight:600;color:#2C3A38;background:#FCFAF4;outline:none;" />
+                <button onClick="{{ row.clear }}" style="width:38px;flex-shrink:0;border:1.5px solid #EFE6D6;background:#fff;border-radius:11px;color:#B79088;font-size:15px;">✕</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===================== GRID ===================== -->
+    <sc-if value="{{ isGrid }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="grid">
+        <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;">
+          <sc-for list="{{ monthChips }}" as="mc" hint-placeholder-count="11">
+            <button onClick="{{ mc.select }}" style="{{ mc.style }}">{{ mc.short }}</button>
+          </sc-for>
+        </div>
+        <div style="font-family:Mali;font-weight:600;font-size:20px;margin:2px 2px 12px;">ตารางเดือน{{ monthFull }} <span style="color:#8A968F;font-size:15px;font-family:Sarabun;">· แตะช่องเพื่อแก้ไขรายวัน</span></div>
+        <div style="background:#fff;border-radius:18px;padding:8px;box-shadow:0 1px 3px rgba(60,70,60,.06);overflow-x:auto;">
+          <table style="border-collapse:separate;border-spacing:0;font-size:12.5px;width:100%;">
+            <thead>
+              <tr>
+                <th style="position:sticky;left:0;z-index:2;background:#D8F0E8;color:#2E7D6B;font-weight:700;padding:7px 6px;border-radius:8px 0 0 0;text-align:center;min-width:30px;">ที่</th>
+                <th style="position:sticky;left:30px;z-index:2;background:#D8F0E8;color:#2E7D6B;font-weight:700;padding:7px 10px;text-align:left;min-width:128px;">ชื่อ - สกุล</th>
+                <th style="background:#D8F0E8;color:#2E7D6B;font-weight:700;padding:7px 6px;min-width:50px;">ยอดยกมา</th>
+                <sc-for list="{{ gridDays }}" as="gd" hint-placeholder-count="31">
+                  <th style="{{ gd.headStyle }}">{{ gd.day }}</th>
+                </sc-for>
+                <th style="background:#C8E9DD;color:#2E7D6B;font-weight:700;padding:7px 8px;min-width:54px;border-radius:0 8px 0 0;">รวม</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ gridRows }}" as="gr" hint-placeholder-count="13">
+                <tr>
+                  <td style="position:sticky;left:0;z-index:1;background:#fff;color:#9AA28C;text-align:center;padding:5px 6px;border-bottom:1px solid #F0EBDD;">{{ gr.no }}</td>
+                  <td style="position:sticky;left:30px;z-index:1;background:#fff;padding:5px 10px;white-space:nowrap;border-bottom:1px solid #F0EBDD;max-width:150px;overflow:hidden;text-overflow:ellipsis;">{{ gr.name }}</td>
+                  <td style="text-align:center;color:#8A968F;padding:5px 6px;border-bottom:1px solid #F0EBDD;">{{ gr.carryLabel }}</td>
+                  <sc-for list="{{ gr.cells }}" as="cl" hint-placeholder-count="31">
+                    <td onClick="{{ cl.goto }}" style="{{ cl.style }}">{{ cl.val }}</td>
+                  </sc-for>
+                  <td style="text-align:center;font-weight:700;color:#2E7D6B;padding:5px 8px;border-bottom:1px solid #F0EBDD;background:#FBF6E8;">{{ gr.totalLabel }}</td>
+                </tr>
+              </sc-for>
+              <tr>
+                <td style="position:sticky;left:0;background:#FBF6E8;border-radius:0 0 0 8px;"></td>
+                <td style="position:sticky;left:30px;background:#FBF6E8;padding:7px 10px;font-weight:700;color:#2E7D6B;">รวม</td>
+                <td style="background:#FBF6E8;text-align:center;font-weight:700;color:#2E7D6B;">{{ carryTotalLabel }}</td>
+                <sc-for list="{{ colTotalCells }}" as="ct" hint-placeholder-count="31">
+                  <td style="{{ ct.style }}">{{ ct.val }}</td>
+                </sc-for>
+                <td style="background:#F2C95D;text-align:center;font-weight:700;color:#7A5B12;border-radius:0 0 8px 0;">{{ grandLabel }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===================== SUMMARY ===================== -->
+    <sc-if value="{{ isSummary }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="summary">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+          <div style="flex:1;min-width:150px;background:linear-gradient(135deg,#38B59B,#2E9C86);color:#fff;border-radius:18px;padding:16px 18px;">
+            <div style="font-size:13px;opacity:.9;">เงินออมรวมทั้งห้อง (ทั้งปี)</div>
+            <div style="font-family:Mali;font-weight:700;font-size:30px;line-height:1.2;">{{ grandYearLabel }}</div>
+          </div>
+          <div style="flex:1;min-width:130px;background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 1px 3px rgba(60,70,60,.06);">
+            <div style="font-size:13px;color:#8A968F;">ออมมากที่สุด</div>
+            <div style="font-family:Mali;font-weight:600;font-size:16px;color:#2C3A38;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ topName }}</div>
+            <div style="font-size:13px;color:#E0973E;font-weight:700;">{{ topLabel }}</div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:18px;padding:8px;box-shadow:0 1px 3px rgba(60,70,60,.06);overflow-x:auto;">
+          <table style="border-collapse:separate;border-spacing:0;font-size:13px;width:100%;">
+            <thead>
+              <tr>
+                <th style="position:sticky;left:0;background:#D8F0E8;color:#2E7D6B;padding:8px 6px;text-align:center;min-width:30px;border-radius:8px 0 0 0;">ที่</th>
+                <th style="position:sticky;left:30px;background:#D8F0E8;color:#2E7D6B;padding:8px 10px;text-align:left;min-width:130px;">ชื่อ - สกุล</th>
+                <sc-for list="{{ sumMonthHeaders }}" as="mh" hint-placeholder-count="11">
+                  <th style="background:#D8F0E8;color:#2E7D6B;padding:8px 6px;min-width:46px;font-weight:600;">{{ mh }}</th>
+                </sc-for>
+                <th style="background:#C8E9DD;color:#2E7D6B;padding:8px 8px;min-width:60px;border-radius:0 8px 0 0;">รวมทั้งปี</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ sumRows }}" as="sr" hint-placeholder-count="13">
+                <tr>
+                  <td style="position:sticky;left:0;background:#fff;color:#9AA28C;text-align:center;padding:6px;border-bottom:1px solid #F0EBDD;">{{ sr.no }}</td>
+                  <td style="position:sticky;left:30px;background:#fff;padding:6px 10px;white-space:nowrap;border-bottom:1px solid #F0EBDD;max-width:160px;overflow:hidden;text-overflow:ellipsis;">{{ sr.name }}</td>
+                  <sc-for list="{{ sr.cells }}" as="mc2" hint-placeholder-count="11">
+                    <td style="{{ mc2.style }}">{{ mc2.val }}</td>
+                  </sc-for>
+                  <td style="text-align:center;font-weight:700;color:#2E7D6B;background:#FBF6E8;padding:6px 8px;border-bottom:1px solid #F0EBDD;">{{ sr.totalLabel }}</td>
+                </tr>
+              </sc-for>
+              <tr>
+                <td style="position:sticky;left:0;background:#FBF6E8;border-radius:0 0 0 8px;"></td>
+                <td style="position:sticky;left:30px;background:#FBF6E8;padding:8px 10px;font-weight:700;color:#2E7D6B;">รวม</td>
+                <sc-for list="{{ sumColTotals }}" as="sct" hint-placeholder-count="11">
+                  <td style="background:#FBF6E8;text-align:center;font-weight:700;color:#2E7D6B;padding:8px 6px;">{{ sct }}</td>
+                </sc-for>
+                <td style="background:#F2C95D;text-align:center;font-weight:700;color:#7A5B12;border-radius:0 0 8px 0;">{{ grandYearShort }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="settings">
+        <div style="background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(60,70,60,.06);margin-bottom:16px;">
+          <div style="font-family:Mali;font-weight:600;font-size:18px;margin-bottom:14px;">ข้อมูลโรงเรียน</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+            <sc-for list="{{ schoolFields }}" as="f" hint-placeholder-count="6">
+              <label style="display:block;">
+                <span style="font-size:12.5px;color:#8A968F;display:block;margin-bottom:5px;">{{ f.label }}</span>
+                <input value="{{ f.value }}" onChange="{{ f.onChange }}" style="width:100%;border:1.5px solid #E4DCC9;border-radius:11px;padding:10px 12px;font-size:15px;color:#2C3A38;background:#FCFAF4;outline:none;" />
+              </label>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(60,70,60,.06);margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="font-family:Mali;font-weight:600;font-size:18px;">รายชื่อนักเรียน <span style="color:#8A968F;font-size:14px;font-family:Sarabun;">({{ studentCount }} คน)</span></div>
+            <button onClick="{{ triggerImport }}" style="{{ importBtnStyle }}"><span style="font-size:15px;">⤒</span><span>{{ importLabel }}</span></button>
+          </div>
+          <input type="file" accept=".xlsx" data-import-file ref="{{ setFileRef }}" onChange="{{ onImportFile }}" style="display:none;" />
+          <div style="font-size:12.5px;color:#9AA6A2;background:#F7F3E9;border:1px dashed #E0D7C2;border-radius:11px;padding:8px 11px;margin-bottom:14px;line-height:1.5;">ดึงเฉพาะ <b>ลำดับที่</b> และ <b>ชื่อ-สกุล</b> จากหน้า “ข้อมูล” ของไฟล์แบบฟอร์ม Excel · รายชื่อเดิมจะถูกแทนที่</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <input value="{{ newName }}" onChange="{{ onNewName }}" onKeyDown="{{ onNewKey }}" placeholder="พิมพ์ชื่อ-สกุลนักเรียน แล้วกดเพิ่ม" style="flex:1;border:1.5px solid #E4DCC9;border-radius:11px;padding:10px 12px;font-size:15px;color:#2C3A38;background:#FCFAF4;outline:none;min-width:0;" />
+            <button onClick="{{ addStudent }}" style="{{ addBtnStyle }}">+ เพิ่ม</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ studentRows }}" as="s" hint-placeholder-count="13">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:28px;height:28px;border-radius:9px;background:#F1ECDE;color:#9AA28C;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ s.no }}</div>
+                <input value="{{ s.name }}" onChange="{{ s.setName }}" style="flex:1;border:1.5px solid #E4DCC9;border-radius:11px;padding:9px 12px;font-size:15px;color:#2C3A38;background:#FCFAF4;outline:none;min-width:0;" />
+                <button onClick="{{ s.up }}" style="width:34px;height:38px;flex-shrink:0;border:1.5px solid #EFE6D6;background:#fff;border-radius:10px;color:#8A968F;">↑</button>
+                <button onClick="{{ s.down }}" style="width:34px;height:38px;flex-shrink:0;border:1.5px solid #EFE6D6;background:#fff;border-radius:10px;color:#8A968F;">↓</button>
+                <button onClick="{{ s.del }}" style="width:34px;height:38px;flex-shrink:0;border:1.5px solid #F0DAD2;background:#FCF2EE;border-radius:10px;color:#C8786A;">✕</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(60,70,60,.06);">
+          <div style="font-family:Mali;font-weight:600;font-size:18px;margin-bottom:6px;">จัดการข้อมูล</div>
+          <div style="font-size:13px;color:#8A968F;margin-bottom:14px;">ข้อมูลทั้งหมดถูกบันทึกไว้ในเครื่องนี้โดยอัตโนมัติ</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button onClick="{{ onExport }}" style="{{ exportStyle2 }}">{{ exportBtnLabel }}</button>
+            <button onClick="{{ resetSample }}" style="border:1.5px solid #E4DCC9;background:#fff;color:#5A6A66;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;">คืนค่าข้อมูลตัวอย่าง</button>
+            <button onClick="{{ clearAll }}" style="border:1.5px solid #F0DAD2;background:#FCF2EE;color:#C8786A;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;">ล้างข้อมูลการออมทั้งหมด</button>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(60,70,60,.06);margin-top:16px;">
+          <div style="font-family:Mali;font-weight:600;font-size:18px;margin-bottom:6px;">🔐 รหัสลับห้องเรียน</div>
+          <div style="font-size:13px;color:#8A968F;margin-bottom:14px;">{{ pinStatusLabel }}</div>
+          <sc-if value="{{ pinStepNull }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button onClick="{{ startSetPin }}" style="border:1.5px solid #E4DCC9;background:#fff;color:#2E7D6B;border-radius:12px;padding:10px 16px;font-size:14px;font-weight:600;">{{ setPinLabel }}</button>
+              <sc-if value="{{ hasPin }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ removePin }}" style="border:1.5px solid #F0DAD2;background:#FCF2EE;color:#C8786A;border-radius:12px;padding:10px 16px;font-size:14px;font-weight:600;">ถอดรหัสผ่าน</button>
+                <button onClick="{{ logout }}" style="border:1.5px solid #E4DCC9;background:#fff;color:#5A6A66;border-radius:12px;padding:10px 16px;font-size:14px;font-weight:600;">ล็อคแอป</button>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ pinStepActive }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:320px;">
+              <div style="font-size:14px;color:#2C3A38;font-weight:600;margin-bottom:10px;">{{ pinStepLabel }}</div>
+              <input type="password" inputmode="numeric" maxlength="8" value="{{ pinFieldValue }}" onChange="{{ onPinField }}" onKeyDown="{{ onPinFieldKey }}" placeholder="กรอก PIN (4–8 หลัก)" style="width:100%;border:1.5px solid #E4DCC9;border-radius:11px;padding:11px 12px;font-size:18px;letter-spacing:6px;text-align:center;color:#2C3A38;background:#FCFAF4;outline:none;margin-bottom:8px;" />
+              <div style="{{ pinMsgStyle }}">{{ pinMsg }}</div>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <button onClick="{{ submitSetPin }}" style="flex:1;border:none;background:#38B59B;color:#fff;border-radius:11px;padding:11px;font-size:14px;font-weight:700;">ต่อไป</button>
+                <button onClick="{{ cancelSetPin }}" style="border:1.5px solid #E4DCC9;background:#fff;color:#5A6A66;border-radius:11px;padding:11px 16px;font-size:14px;font-weight:600;">ยกเลิก</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+
+      </div>
+    </sc-if>
+
+  </div>
+
+  <!-- PIN management block in settings -->
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+  </sc-if>
+
+  <sc-if value="{{ isNarrow }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid #E7E0D2;display:flex;padding:7px 6px;padding-bottom:max(7px,env(safe-area-inset-bottom));">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="4">
+        <button onClick="{{ n.select }}" style="{{ n.barStyle }}">
+          <span style="display:flex;align-items:center;justify-content:center;width:30px;height:26px;">
+            <sc-if value="{{ n.isDaily }}" hint-placeholder-val="{{ false }}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+                <path d="M3.5 20.5h17"></path>
+                <path d="M15.2 4.3a1.9 1.9 0 0 1 2.7 2.7L8.6 16.3l-3.7.9.9-3.6Z"></path>
+                <path d="M13.6 5.9 16.4 8.7"></path>
+              </svg>
+            </sc-if>
+            <sc-if value="{{ n.isGrid }}" hint-placeholder-val="{{ false }}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+                <rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect>
+                <rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect>
+                <rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect>
+                <rect x="13.5" y="13.5" width="7" height="7" rx="2"></rect>
+              </svg>
+            </sc-if>
+            <sc-if value="{{ n.isSummary }}" hint-placeholder-val="{{ false }}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+                <path d="M3.5 20.5h17"></path>
+                <rect x="5.2" y="11.5" width="3.4" height="6.5" rx="1.4"></rect>
+                <rect x="10.3" y="7.5" width="3.4" height="10.5" rx="1.4"></rect>
+                <rect x="15.4" y="4.5" width="3.4" height="13.5" rx="1.4"></rect>
+              </svg>
+            </sc-if>
+            <sc-if value="{{ n.isSettings }}" hint-placeholder-val="{{ false }}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+                <path d="M4 8.5h16"></path>
+                <path d="M4 15.5h16"></path>
+                <circle cx="15" cy="8.5" r="2.7" fill="#fff"></circle>
+                <circle cx="9" cy="15.5" r="2.7" fill="#fff"></circle>
+              </svg>
+            </sc-if>
+          </span>
+          <span>{{ n.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:820},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#38B59B&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#38B59B&quot;,&quot;#6FB1E0&quot;,&quot;#E89A6C&quot;,&quot;#B79BD6&quot;,&quot;#E08AA8&quot;]},&quot;presetBehavior&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;add&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;add&quot;,&quot;replace&quot;]}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.KEY = "savingsApp_v1";
+    this.PIN_KEY = "savingsApp_pin";
+    this.SESSION_KEY = "savingsApp_session";
+    this.FIREBASE_KEY = "savingsApp_firebase_v1";
+    this._db = null;
+    this._classId = null;
+    // Firebase config ฝังตรงนี้ — ทุกเครื่องเปิด URL แล้วใช้ได้เลยโดยไม่ต้องตั้งค่า
+    this.HARDCODED_FB = {
+      config: {
+        apiKey: "AIzaSyBo8eF-6WLrJ-nHGd4W62EWX-vqgyTbVd4",
+        authDomain: "kru24-bbba0.firebaseapp.com",
+        projectId: "kru24-bbba0",
+        storageBucket: "kru24-bbba0.firebasestorage.app",
+        messagingSenderId: "938422645787",
+        appId: "1:938422645787:web:405a291c4aceb22abd74be"
+      },
+      classId: "780080"
+    };
+    this.MONTHS = [
+      { short: "พ.ค.", full: "พฤษภาคม", m: 5, cy: 2568, days: 31 },
+      { short: "มิ.ย.", full: "มิถุนายน", m: 6, cy: 2568, days: 30 },
+      { short: "ก.ค.", full: "กรกฎาคม", m: 7, cy: 2568, days: 31 },
+      { short: "ส.ค.", full: "สิงหาคม", m: 8, cy: 2568, days: 31 },
+      { short: "ก.ย.", full: "กันยายน", m: 9, cy: 2568, days: 30 },
+      { short: "ต.ค.", full: "ตุลาคม", m: 10, cy: 2568, days: 31 },
+      { short: "พ.ย.", full: "พฤศจิกายน", m: 11, cy: 2568, days: 30 },
+      { short: "ธ.ค.", full: "ธันวาคม", m: 12, cy: 2568, days: 31 },
+      { short: "ม.ค.", full: "มกราคม", m: 1, cy: 2569, days: 31 },
+      { short: "ก.พ.", full: "กุมภาพันธ์", m: 2, cy: 2569, days: 28 },
+      { short: "มี.ค.", full: "มีนาคม", m: 3, cy: 2569, days: 31 }
+    ];
+    this.WD = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+    this.data = this.load();
+    const hasPin = !!(typeof localStorage !== "undefined" && localStorage.getItem(this.PIN_KEY));
+    const sessionOk = !!(typeof sessionStorage !== "undefined" && sessionStorage.getItem(this.SESSION_KEY));
+    this.state = {
+      tab: "daily", month: 0, day: 1, newName: "",
+      vw: (typeof window !== "undefined" ? window.innerWidth : 1000),
+      // login state
+      loggedIn: false,
+      pinInput: "", pinError: "",
+      // settings: change pin
+      pinStep: null, // null | "enter-old" | "enter-new" | "confirm-new"
+      pinOld: "", pinNew: "", pinConfirm: "", pinMsg: "",
+      fbReady: false, syncStatus: "idle", syncError: "", fbConfigRaw: "", fbClassIdInput: "", fbConnecting: false
+    };
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+  }
+  componentDidMount() {
+    window.addEventListener("resize", this._onResize);
+    if (!this.state.loggedIn) setTimeout(() => { const el = document.getElementById("pin-input"); if (el) el.focus(); }, 200);
+    // Auto-connect: ใช้ saved config ก่อน ถ้าไม่มีใช้ hardcoded config อัตโนมัติ
+    const fbCfg = this.loadFbConfig();
+    const activeCfg = (fbCfg && fbCfg.config && fbCfg.classId) ? fbCfg : this.HARDCODED_FB;
+    if (activeCfg) {
+      this._classId = activeCfg.classId;
+      this.loadFirebaseSDK()
+        .then(() => { this._db = this.initFirebase(activeCfg.config); if (this._db) this.loadFromFirestore(); })
+        .catch(() => this.setState({ syncStatus: "error", syncError: "โหลด Firebase SDK ไม่สำเร็จ" }));
+    }
+  }
+  componentWillUnmount() { window.removeEventListener("resize", this._onResize); }
+
+  /* ---- PIN helpers ---- */
+  getPin() { try { return localStorage.getItem(this.PIN_KEY) || null; } catch(e) { return null; } }
+  hashPin(p) {
+    // simple non-crypto hash (FNV-1a 32bit) — good enough for classroom use
+    let h = 0x811c9dc5;
+    for (let i = 0; i < p.length; i++) { h ^= p.charCodeAt(i); h = (h * 0x01000193) >>> 0; }
+    return h.toString(16);
+  }
+  checkPin(p) { const stored = this.getPin(); if (!stored) return true; return this.hashPin(p) === stored; }
+  submitLogin() {
+    const p = this.state.pinInput;
+    if (!p) { this.setState({ pinError: "กรุณากรอกรหัสลับห้องเรียน" }); return; }
+    if (this.checkPin(p)) {
+      try { sessionStorage.setItem(this.SESSION_KEY, "1"); } catch(e) {}
+      this.setState({ loggedIn: true, pinInput: "", pinError: "" });
+    } else {
+      this.setState({ pinInput: "", pinError: "PIN ไม่ถูกต้อง กรุณาลองอีกครั้ง" });
+      setTimeout(() => { const el = document.getElementById("pin-input"); if (el) el.focus(); }, 100);
+    }
+  }
+  logout() {
+    try { sessionStorage.removeItem(this.SESSION_KEY); } catch(e) {}
+    this.setState({ loggedIn: false, pinInput: "", pinError: "" });
+    setTimeout(() => { const el = document.getElementById("pin-input"); if (el) el.focus(); }, 200);
+  }
+  startSetPin() { this.setState({ pinStep: this.getPin() ? "enter-old" : "enter-new", pinOld: "", pinNew: "", pinConfirm: "", pinMsg: "" }); }
+  submitSetPin() {
+    const { pinStep, pinOld, pinNew, pinConfirm } = this.state;
+    if (pinStep === "enter-old") {
+      if (!this.checkPin(pinOld)) { this.setState({ pinOld: "", pinMsg: "PIN เดิมไม่ถูกต้อง" }); return; }
+      this.setState({ pinStep: "enter-new", pinMsg: "" }); return;
+    }
+    if (pinStep === "enter-new") {
+      if (pinNew.length < 4) { this.setState({ pinMsg: "PIN ต้องมีอย่างน้อย 4 หลัก" }); return; }
+      this.setState({ pinStep: "confirm-new", pinMsg: "" }); return;
+    }
+    if (pinStep === "confirm-new") {
+      if (pinNew !== pinConfirm) { this.setState({ pinConfirm: "", pinMsg: "PIN ไม่ตรงกัน กรุณากรอกอีกครั้ง" }); return; }
+      try { localStorage.setItem(this.PIN_KEY, this.hashPin(pinNew)); } catch(e) {}
+      this.syncPinToFirestore();
+      this.setState({ pinStep: null, pinMsg: "", pinNew: "", pinConfirm: "", pinOld: "" });
+      return;
+    }
+  }
+  removePin() {
+    if (confirm("ยืนยันการถอดรหัสผ่าน? ทุกคนจะสามารถเข้าใช้งานได้โดยไม่ต้องกรอก PIN")) {
+      try { localStorage.removeItem(this.PIN_KEY); } catch(e) {}
+      this.syncPinToFirestore();
+      this.setState({ pinStep: null, pinMsg: "ถอดรหัสผ่านแล้ว" });
+    }
+  }
+
+  /* ---- Firebase ---- */
+  loadFbConfig() {
+    try { const r = localStorage.getItem(this.FIREBASE_KEY); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+  }
+  saveFbConfig(config, classId) {
+    try { localStorage.setItem(this.FIREBASE_KEY, JSON.stringify({ config, classId })); } catch(e) {}
+  }
+  loadFirebaseSDK() {
+    if (window.firebase && window.firebase.firestore) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const s1 = document.createElement("script");
+      s1.src = "https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js";
+      s1.onload = () => {
+        const s2 = document.createElement("script");
+        s2.src = "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js";
+        s2.onload = resolve;
+        s2.onerror = () => reject(new Error("โหลด Firestore SDK ไม่สำเร็จ"));
+        document.head.appendChild(s2);
+      };
+      s1.onerror = () => reject(new Error("โหลด Firebase SDK ไม่สำเร็จ"));
+      document.head.appendChild(s1);
+    });
+  }
+  initFirebase(config) {
+    try {
+      if (!window.firebase) return null;
+      const existing = firebase.apps.find(function(a) { return a.name === "savings-app"; });
+      const app = existing || firebase.initializeApp(config, "savings-app");
+      return firebase.firestore(app);
+    } catch(e) {
+      console.error("Firebase init:", e);
+      this.setState({ syncStatus: "error", syncError: e.message });
+      return null;
+    }
+  }
+  pushToFirestore() {
+    if (!this._db || !this._classId) return;
+    this.setState({ syncStatus: "syncing" });
+    this._db.collection("classrooms").doc(this._classId)
+      .set({ payload: JSON.stringify(this.data), ts: new Date().toISOString(), pin: (this.getPin() || null) })
+      .then(() => this.setState({ syncStatus: "synced", syncError: "" }))
+      .catch((e) => this.setState({ syncStatus: "error", syncError: e.message || String(e) }));
+  }
+  syncPinToFirestore() {
+    if (!this._db || !this._classId) return;
+    const pin = this.getPin() || null;
+    this._db.collection("classrooms").doc(this._classId).update({ pin: pin }).catch(() => {});
+  }
+  loadFromFirestore() {
+    if (!this._db || !this._classId) return;
+    this.setState({ syncStatus: "loading" });
+    const self = this;
+    this._db.collection("classrooms").doc(this._classId).get()
+      .then(function(doc) {
+        clearTimeout(self._fbReadyTimer);
+        // Sync รหัสลับห้องเรียนจาก Firestore → localStorage
+        if (doc.exists && doc.data()) {
+          if (doc.data().pin) {
+            try { localStorage.setItem(self.PIN_KEY, doc.data().pin); } catch(e) {}
+          } else {
+            try { localStorage.removeItem(self.PIN_KEY); } catch(e) {}
+          }
+        }
+        const hp = !!(localStorage.getItem(self.PIN_KEY));
+        const so = !!(sessionStorage.getItem(self.SESSION_KEY));
+        self.setState({ fbReady: true, loggedIn: !hp || so });
+        if (hp && !so) setTimeout(() => { const el = document.getElementById("pin-input"); if (el) el.focus(); }, 200);
+        // โหลดข้อมูลห้องเรียน
+        if (doc.exists && doc.data() && doc.data().payload) {
+          try {
+            const parsed = JSON.parse(doc.data().payload);
+            if (parsed && parsed.students) {
+              self.data = parsed;
+              localStorage.setItem(self.KEY, JSON.stringify(self.data));
+              self.setState({ syncStatus: "synced", syncError: "" });
+              return;
+            }
+          } catch(ex) {}
+        }
+        self.pushToFirestore();
+      })
+      .catch(function(e) {
+        clearTimeout(self._fbReadyTimer);
+        const hp = !!(localStorage.getItem(self.PIN_KEY));
+        const so = !!(sessionStorage.getItem(self.SESSION_KEY));
+        self.setState({ fbReady: true, loggedIn: !hp || so, syncStatus: "error", syncError: e.message || String(e) });
+      });
+  }
+  genClassId() {
+    const sc = this.data.school;
+    const slug = ((sc.classLevel || "h") + "_" + (sc.year || "")).replace(/[^a-zA-Z0-9ก-๙]/g, "").substring(0, 12);
+    return slug + "_" + Math.random().toString(36).substring(2, 8);
+  }
+  connectFirebase() {
+    const raw = (this.state.fbConfigRaw || "").trim();
+    if (!raw) { this.setState({ syncError: "กรุณากรอก Firebase Config" }); return; }
+    let config;
+    try {
+      // รองรับทั้ง JSON และ JS object literal (keys ไม่มี quotes)
+      const m = raw.match(/\{[\s\S]*\}/);
+      let s = m ? m[0] : ('{' + raw + '}');
+      // เพิ่ม quotes ให้ keys ที่ยังไม่มี เช่น apiKey: → "apiKey":
+      s = s.replace(/([{,]\s*\n?\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":');
+      config = JSON.parse(s);
+    } catch(e) { config = null; }
+    if (!config || !config.apiKey || !config.projectId) {
+      this.setState({ syncError: "Config ไม่ถูกต้อง — ต้องมี apiKey และ projectId" }); return;
+    }
+    const classId = (this.state.fbClassIdInput || "").trim() || this.genClassId();
+    this.setState({ fbConnecting: true, syncError: "" });
+    const self = this;
+    this.loadFirebaseSDK()
+      .then(function() {
+        self._classId = classId;
+        self._db = self.initFirebase(config);
+        if (!self._db) throw new Error("เริ่มต้น Firebase ไม่สำเร็จ");
+        return self._db.collection("classrooms").doc(classId).get();
+      })
+      .then(function(doc) {
+        if (doc.exists && doc.data() && doc.data().payload) {
+          try {
+            const parsed = JSON.parse(doc.data().payload);
+            if (parsed && parsed.students) {
+              self.data = parsed;
+              localStorage.setItem(self.KEY, JSON.stringify(self.data));
+            }
+          } catch(ex) {}
+        } else {
+          self._db.collection("classrooms").doc(classId).set({ payload: JSON.stringify(self.data), ts: new Date().toISOString() });
+        }
+        self.saveFbConfig(config, classId);
+        self.setState({ fbConnecting: false, syncStatus: "synced", syncError: "", fbClassIdInput: "" });
+      })
+      .catch(function(e) {
+        self._db = null; self._classId = null;
+        self.setState({ fbConnecting: false, syncStatus: "idle", syncError: e.message || String(e) });
+      });
+  }
+  disconnectFirebase() {
+    if (!confirm("ยกเลิกการซิงค์? ข้อมูลในเครื่องนี้จะยังคงอยู่ แต่จะหยุดซิงค์กับ Firebase")) return;
+    try { localStorage.removeItem(this.FIREBASE_KEY); } catch(e) {}
+    this._db = null; this._classId = null;
+    this.setState({ syncStatus: "idle", syncError: "", fbConfigRaw: "", fbClassIdInput: "" });
+  }
+
+  /* ---------- storage ---------- */
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (raw) { const d = JSON.parse(raw); if (d && d.students) return d; }
+    } catch (e) {}
+    return this.seed();
+  }
+  persist() { try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); } catch (e) {} }
+  mutate(fn) { fn(); this.persist(); this.pushToFirestore(); this.forceUpdate(); }
+  addStudentByName() {
+    const nm = (this.state.newName || "").trim();
+    this.data.students.push({ id: "s" + Date.now() + Math.floor(Math.random() * 999), name: nm || "นักเรียนใหม่" });
+    this.persist();
+    this.setState({ newName: "" });
+  }
+
+  seed() {
+    const names = [
+      "เด็กชายภัคพล จาบจันทึก", "เด็กชายนันทชัย มือสันเทียะ", "เด็กชายนนทชัย มือสันเทียะ",
+      "เด็กชายอมรินทร์ ทำพลกรัง", "เด็กชายกิตติวัฒน์ พลสิทธิ์", "เด็กหญิงญานิศา แก้วนอก",
+      "เด็กหญิงธัญทิชดา เจิมสูงเนิน", "เด็กหญิงธิดารัตน์ เจิมสูงเนิน", "เด็กหญิงเกตศรินทร์ พึ่งประสพ",
+      "เด็กหญิงพิลาภา แสงสิงแก้ว", "เด็กหญิงณัฏฐนิชา ทิศขุนทด", "เด็กหญิงจริญญา ชาววาปี",
+      "เด็กชายกิตติพงศ์ โพธิกมล"
+    ];
+    const students = names.map((n, i) => ({ id: "s" + (i + 1), name: n }));
+    // sample May (month 0) deposits
+    const sample = {
+      s1: { 19: 5, 21: 5, 22: 5, 23: 5, 26: 5, 27: 5, 30: 5 },
+      s2: { 19: 5, 20: 5, 22: 5, 26: 5, 28: 5, 29: 5 },
+      s3: { 19: 5, 20: 10, 21: 5, 22: 5, 23: 10, 26: 10, 27: 5, 28: 10, 29: 5, 30: 5 },
+      s4: {},
+      s5: { 20: 5, 23: 5, 27: 5, 30: 5 },
+      s6: { 19: 10, 20: 5, 21: 5, 22: 10, 23: 10, 26: 10, 27: 5, 28: 10, 29: 10, 30: 5 },
+      s7: { 19: 5, 21: 5, 22: 5, 26: 5, 27: 5, 29: 5 },
+      s8: { 19: 10, 20: 10, 21: 5, 23: 5, 26: 10, 27: 10, 28: 5, 30: 5 },
+      s9: { 19: 5, 21: 5, 22: 5, 26: 5, 28: 5, 29: 5, 30: 5 },
+      s10: { 20: 5, 21: 5, 23: 5, 27: 5, 28: 5, 29: 5 },
+      s11: { 19: 5, 21: 5, 22: 5, 23: 5, 26: 5, 27: 5, 28: 5, 29: 5 },
+      s12: { 19: 5, 21: 5, 23: 5, 26: 5, 28: 5 },
+      s13: { 29: 5 }
+    };
+    return {
+      school: {
+        name: "โรงเรียนบ้านซับยาง", classLevel: "ป.3", year: "2568",
+        office: "สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมาเขต 5",
+        teacher: "นางสาวกฤษณา หินสิลา", director: "นายธีระชัย โสภาคย์"
+      },
+      students,
+      entries: { 0: sample },
+      holidays: {}
+    };
+  }
+
+  /* ---------- numbers ---------- */
+  getAmt(m, sid, day) {
+    const e = this.data.entries[m]; if (!e) return 0;
+    const s = e[sid]; if (!s) return 0; return s[day] || 0;
+  }
+  setAmt(m, sid, day, v) {
+    const e = this.data.entries; if (!e[m]) e[m] = {}; if (!e[m][sid]) e[m][sid] = {};
+    if (v > 0) e[m][sid][day] = v; else delete e[m][sid][day];
+  }
+  depSum(m, sid) {
+    const s = this.data.entries[m] && this.data.entries[m][sid]; if (!s) return 0;
+    let t = 0; for (const k in s) t += s[k]; return t;
+  }
+  carry(m, sid) { let t = 0; for (let k = 0; k < m; k++) t += this.depSum(k, sid); return t; }
+  monthTotal(m, sid) { return this.carry(m, sid) + this.depSum(m, sid); }
+  yearTotal(sid) { let t = 0; for (let k = 0; k < this.MONTHS.length; k++) t += this.depSum(k, sid); return t; }
+  dayTotalAll(m, day) { let t = 0; this.data.students.forEach(s => t += this.getAmt(m, s.id, day)); return t; }
+  isHoliday(m, day) { return !!(this.data.holidays[m] && this.data.holidays[m][day]); }
+
+  fmt(n) { return (n || 0).toLocaleString("en-US") + " ฿"; }
+  fmtShort(n) { return (n || 0).toLocaleString("en-US"); }
+  wd(m, day) {
+    const mo = this.MONTHS[m]; const d = new Date(mo.cy - 543, mo.m - 1, day);
+    return this.WD[d.getDay()];
+  }
+  isWeekend(m, day) {
+    const mo = this.MONTHS[m]; const g = new Date(mo.cy - 543, mo.m - 1, day).getDay();
+    return g === 0 || g === 6;
+  }
+
+  /* ---------- export model ---------- */
+  buildModel() {
+    const d = this.data;
+    const students = d.students.map(s => ({ name: s.name }));
+    const yearTotals = d.students.map(s => this.yearTotal(s.id));
+    const grandYear = yearTotals.reduce((a, b) => a + b, 0);
+    const months = this.MONTHS.map((mo, mi) => {
+      const rows = d.students.map((s, i) => {
+        const carry = this.carry(mi, s.id);
+        const days = []; let dep = 0;
+        for (let dd = 1; dd <= 31; dd++) { const v = this.getAmt(mi, s.id, dd); days.push(v); dep += v; }
+        return { no: i + 1, name: s.name, carry: carry, days: days, total: carry + dep };
+      });
+      const colTotals = [];
+      for (let dd = 1; dd <= 31; dd++) { let t = 0; d.students.forEach(s => t += this.getAmt(mi, s.id, dd)); colTotals.push(t); }
+      const carryTotal = rows.reduce((a, r) => a + r.carry, 0);
+      const dayTotal = colTotals.reduce((a, b) => a + b, 0);
+      const grand = rows.reduce((a, r) => a + r.total, 0);
+      const holidays = new Set(Object.keys(d.holidays[mi] || {}).map(Number));
+      return { short: mo.short, full: mo.full, yearLabel: mo.cy, dayCount: mo.days, rows, colTotals, carryTotal, dayTotal, grand, holidays };
+    });
+    return { school: d.school, students, yearTotals, grandYear, months };
+  }
+  decodeTemplate() {
+    if (this._tmplBuf) return this._tmplBuf;
+    if (!window.SAVINGS_TEMPLATE_B64) return null;
+    const bin = atob(window.SAVINGS_TEMPLATE_B64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    this._tmplBuf = bytes.buffer;
+    return this._tmplBuf;
+  }
+  onExport() {
+    const model = this.buildModel();
+    const fn = "บันทึกการออมเงิน_" + this.data.school.classLevel + "_" + this.data.school.year + ".xlsx";
+    // Preferred: fill the official template so output matches the form 100%.
+    if (window.SavingsTemplate && window.SAVINGS_TEMPLATE_B64) {
+      let buf;
+      try { buf = this.decodeTemplate(); } catch (e) { buf = null; }
+      if (buf) {
+        this.setState({ exporting: true });
+        window.SavingsTemplate.downloadFilled(model, buf, fn)
+          .then((res) => {
+            this.setState({ exporting: false });
+            if (res && res.capped) {
+              alert("หมายเหตุ: แบบฟอร์มต้นฉบับรองรับ " + window.SavingsTemplate.MAXROWS +
+                " คนต่อห้อง จึงส่งออก " + window.SavingsTemplate.MAXROWS + " คนแรก\n(มีนักเรียน " + model.students.length + " คน)");
+            }
+          })
+          .catch((err) => {
+            this.setState({ exporting: false });
+            // fallback to the generated workbook
+            if (window.SavingsXlsx) window.SavingsXlsx.download(model, fn);
+            else alert("ส่งออกไม่สำเร็จ: " + (err && err.message ? err.message : err));
+          });
+        return;
+      }
+    }
+    // Fallback: generated workbook (no embedded logo).
+    if (!window.SavingsXlsx) { alert("ตัวช่วยส่งออกยังโหลดไม่เสร็จ กรุณาลองอีกครั้ง"); return; }
+    window.SavingsXlsx.download(model, fn);
+  }
+
+  onImportFile(e) {
+    const input = e.target;
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (!window.SavingsXlsx || !window.SavingsXlsx.readStudents) {
+      alert("ตัวช่วยนำเข้ายังโหลดไม่เสร็จ กรุณาลองอีกครั้ง"); input.value = ""; return;
+    }
+    this.setState({ importing: true });
+    file.arrayBuffer()
+      .then((buf) => window.SavingsXlsx.readStudents(buf))
+      .then((res) => {
+        input.value = "";
+        const list = (res.students || []).filter((s) => s.name);
+        if (!list.length) {
+          this.setState({ importing: false });
+          alert("ไม่พบรายชื่อนักเรียนในหน้า “ข้อมูล” ของไฟล์นี้\nกรุณาตรวจสอบว่าเป็นแบบฟอร์มบันทึกการออมเงิน");
+          return;
+        }
+        const ok = confirm(
+          "พบรายชื่อนักเรียน " + list.length + " คนในไฟล์\n\n" +
+          "• 1. " + list[0].name + (list.length > 1 ? "\n• " + list.length + ". " + list[list.length - 1].name : "") +
+          "\n\nนำเข้าและแทนที่รายชื่อเดิมทั้งหมดหรือไม่?\n(ข้อมูลเงินออมที่บันทึกไว้จะถูกล้าง)"
+        );
+        if (!ok) { this.setState({ importing: false }); return; }
+        this.data.students = list.map((s, i) => ({ id: "s" + (i + 1), name: s.name }));
+        this.data.entries = {};
+        this.data.holidays = {};
+        this.persist();
+        this.setState({ importing: false });
+        alert("นำเข้ารายชื่อนักเรียน " + list.length + " คนเรียบร้อยแล้ว");
+      })
+      .catch((err) => {
+        input.value = "";
+        this.setState({ importing: false });
+        alert("อ่านไฟล์ไม่สำเร็จ: " + (err && err.message ? err.message : err));
+      });
+  }
+  triggerImport() {
+    if (this._fileInput) this._fileInput.click();
+  }
+
+  /* ---------- render ---------- */
+  renderVals() {
+    const st = this.state, d = this.data;
+    const ac = this.props.accentColor || "#38B59B";
+    const acDark = "#2E7D6B";
+    const isWide = st.vw >= 860;
+    const m = st.month, day = st.day, mo = this.MONTHS[m];
+    const presetReplace = this.props.presetBehavior === "replace";
+    const self = this;
+
+    const apply = (sid, dd, n) => {
+      this.mutate(() => {
+        const cur = presetReplace ? 0 : this.getAmt(m, sid, dd);
+        this.setAmt(m, sid, dd, Math.max(0, cur + n));
+      });
+    };
+
+    // nav
+    const tabs = [
+      { key: "daily", label: "บันทึก" }, { key: "grid", label: "ตาราง" },
+      { key: "summary", label: "สรุป" }, { key: "settings", label: "ตั้งค่า" }
+    ];
+    const navItems = tabs.map(t => {
+      const active = st.tab === t.key;
+      return {
+        label: t.label,
+        key: t.key,
+        isDaily: t.key === "daily", isGrid: t.key === "grid",
+        isSummary: t.key === "summary", isSettings: t.key === "settings",
+        select: () => this.setState({ tab: t.key }),
+        topStyle: "padding:8px 15px;border:none;border-radius:999px;font-family:Sarabun;font-size:14.5px;font-weight:600;white-space:nowrap;" +
+          (active ? "background:" + ac + ";color:#fff;" : "background:transparent;color:#5A6A66;"),
+        barStyle: "flex:1;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 2px;font-family:Sarabun;font-size:11.5px;font-weight:" +
+          (active ? "700" : "600") + ";" + (active ? "color:" + acDark + ";" : "color:#A6AEA9;")
+      };
+    });
+
+    const schoolLine = d.school.name + " · ชั้น " + d.school.classLevel + " · ปีการศึกษา " + d.school.year;
+
+    // month chips (shared)
+    const chipStyleFor = (i) => {
+      const sel = i === m;
+      return "flex-shrink:0;padding:8px 16px;border-radius:999px;font-size:14.5px;font-weight:600;border:1.5px solid " +
+        (sel ? ac : "#E4DCC9") + ";background:" + (sel ? ac : "#fff") + ";color:" + (sel ? "#fff" : "#5A6A66") + ";font-family:Sarabun;";
+    };
+    const monthChips = this.MONTHS.map((mm, i) => ({
+      short: mm.short, style: chipStyleFor(i),
+      select: () => this.setState({ month: i, day: Math.min(this.state.day, mm.days) })
+    }));
+
+    const chipMint = "flex:1;border:none;border-radius:11px;padding:9px 0;background:#D8F0E8;color:" + acDark + ";font-size:15px;font-weight:700;";
+    const chipSky = "flex:1;border:none;border-radius:11px;padding:9px 0;background:#DCEDF9;color:#2E6A9C;font-size:15px;font-weight:700;";
+    const chipPeach = "flex:1;border:none;border-radius:11px;padding:9px 0;background:#FBE6DA;color:#C0703F;font-size:15px;font-weight:700;";
+
+    const hasPin = !!this.getPin();
+    const pinStepNull = !st.pinStep;
+    const pinStepActive = !!st.pinStep;
+    const pinStepLabels = { "enter-old": "กรอก PIN เดิม", "enter-new": "กรอก PIN ใหม่ (4–8 หลัก)", "confirm-new": "ยืนยัน PIN ใหม่อีกครั้ง" };
+    const pinFieldVal = st.pinStep === "enter-old" ? st.pinOld : st.pinStep === "enter-new" ? st.pinNew : st.pinConfirm;
+    const onPinFieldChange = (e) => {
+      const v = e.target.value.replace(/\D/g, "");
+      if (st.pinStep === "enter-old") this.setState({ pinOld: v, pinMsg: "" });
+      else if (st.pinStep === "enter-new") this.setState({ pinNew: v, pinMsg: "" });
+      else this.setState({ pinConfirm: v, pinMsg: "" });
+    };
+
+    const vals = {
+      showLoading: !st.fbReady,
+      showLogin: st.fbReady && !st.loggedIn,
+      showApp: st.fbReady && st.loggedIn,
+      // login screen
+      pinInput: st.pinInput,
+      pinError: st.pinError,
+      pinErrorStyle: "font-size:13px;min-height:18px;color:#C8786A;font-weight:600;" + (st.pinError ? "" : "opacity:0;"),
+      onPinInput: (e) => this.setState({ pinInput: e.target.value.replace(/\D/g, ""), pinError: "" }),
+      onPinKey: (e) => { if (e.key === "Enter") this.submitLogin(); },
+      submitLogin: () => this.submitLogin(),
+      isWide, isNarrow: !isWide,
+      isDaily: st.tab === "daily", isGrid: st.tab === "grid",
+      isSummary: st.tab === "summary", isSettings: st.tab === "settings",
+      navItems, schoolLine, monthChips, chipMint, chipSky, chipPeach,
+      monthFull: mo.full,
+      onExport: () => this.onExport(),
+      exportTopLabel: st.exporting ? "กำลังสร้าง…" : "ส่งออก Excel",
+      exportBtnLabel: st.exporting ? "กำลังสร้างไฟล์…" : "⤓ ส่งออกเป็น Excel",
+      logoStyle: "width:40px;height:40px;border-radius:13px;background:" + ac + ";display:flex;align-items:center;justify-content:center;color:#fff;font-family:Mali;font-weight:700;font-size:21px;flex-shrink:0;",
+      exportStyle: "display:flex;align-items:center;gap:6px;border:none;background:" + acDark + ";color:#fff;border-radius:12px;padding:9px 14px;font-size:14px;font-weight:600;white-space:nowrap;flex-shrink:0;",
+      exportStyle2: "border:none;background:" + acDark + ";color:#fff;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;",
+      addBtnStyle: "border:none;background:" + ac + ";color:#fff;border-radius:11px;padding:9px 14px;font-size:13.5px;font-weight:600;"
+    };
+
+    /* ----- DAILY ----- */
+    if (st.tab === "daily") {
+      vals.dayStrip = [];
+      for (let dd = 1; dd <= mo.days; dd++) {
+        const sel = dd === day, hol = this.isHoliday(m, dd), we = this.isWeekend(m, dd);
+        let s = "flex-shrink:0;min-width:44px;border-radius:13px;border:1.5px solid #E7E0D2;background:#fff;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 4px;font-family:Sarabun;color:#3A4744;";
+        if (sel) s = "flex-shrink:0;min-width:44px;border-radius:13px;border:1.5px solid " + ac + ";background:" + ac + ";color:#fff;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 4px;font-family:Sarabun;box-shadow:0 3px 8px rgba(56,181,155,.3);";
+        else if (hol) s = "flex-shrink:0;min-width:44px;border-radius:13px;border:1.5px solid #E4D9C2;background:#EFEAE0;color:#B0A48E;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 4px;font-family:Sarabun;";
+        else if (we) s += "color:#C98A8A;";
+        const dn = dd;
+        vals.dayStrip.push({ day: dn, wd: this.wd(m, dn), style: s, select: () => this.setState({ day: dn }) });
+      }
+      vals.dayHeading = "วันที่ " + day + " " + mo.full + " " + mo.cy;
+      vals.dayTotalLabel = this.fmt(this.dayTotalAll(m, day));
+      const hol = this.isHoliday(m, day);
+      vals.holidayBtnLabel = hol ? "✓ วันหยุด" : "ทำเครื่องหมายวันหยุด";
+      vals.holidayBtnStyle = "flex-shrink:0;border-radius:11px;padding:9px 14px;font-size:13px;font-weight:600;border:1.5px solid " +
+        (hol ? "#D9BFA0" : "#E4DCC9") + ";background:" + (hol ? "#F4E6CF" : "#fff") + ";color:" + (hol ? "#9A7B3E" : "#8A968F") + ";";
+      vals.toggleHoliday = () => this.mutate(() => {
+        if (!d.holidays[m]) d.holidays[m] = {};
+        if (d.holidays[m][day]) delete d.holidays[m][day]; else d.holidays[m][day] = true;
+      });
+      const allDelta = (n) => this.mutate(() => {
+        d.students.forEach(s => {
+          const cur = presetReplace ? 0 : this.getAmt(m, s.id, day);
+          this.setAmt(m, s.id, day, Math.max(0, cur + n));
+        });
+      });
+      vals.all5 = () => allDelta(5); vals.all10 = () => allDelta(10); vals.all20 = () => allDelta(20);
+      vals.clearDay = () => this.mutate(() => { d.students.forEach(s => this.setAmt(m, s.id, day, 0)); });
+
+      vals.dailyRows = d.students.map((s, i) => {
+        const amt = this.getAmt(m, s.id, day);
+        const sid = s.id;
+        return {
+          no: i + 1, name: s.name,
+          amt, amtStr: amt ? String(amt) : "",
+          amtLabel: amt ? amt + " ฿" : "—",
+          amtStyle: "font-family:Mali;font-weight:700;font-size:19px;min-width:46px;text-align:right;color:" + (amt ? acDark : "#CDD3CF") + ";",
+          monthTotalLabel: this.fmt(this.monthTotal(m, sid)),
+          add5: () => apply(sid, day, 5), add10: () => apply(sid, day, 10), add20: () => apply(sid, day, 20),
+          clear: () => this.mutate(() => this.setAmt(m, sid, day, 0)),
+          setAmt: (e) => { const v = parseInt(e.target.value, 10); this.mutate(() => this.setAmt(m, sid, day, isNaN(v) ? 0 : Math.max(0, v))); }
+        };
+      });
+    }
+
+    /* ----- GRID ----- */
+    if (st.tab === "grid") {
+      vals.gridDays = [];
+      for (let dd = 1; dd <= 31; dd++) {
+        const within = dd <= mo.days, hol = this.isHoliday(m, dd);
+        vals.gridDays.push({
+          day: dd,
+          headStyle: "padding:6px 2px;font-weight:600;text-align:center;min-width:26px;color:" +
+            (within ? "#2E7D6B" : "#C9C0AC") + ";background:" + (hol ? "#EEE7D7" : "#E6F4EE") + ";" + (dd === 31 ? "" : "")
+        });
+      }
+      vals.gridRows = d.students.map((s, i) => {
+        const cells = [];
+        for (let dd = 1; dd <= 31; dd++) {
+          const v = this.getAmt(m, s.id, dd), within = dd <= mo.days, hol = this.isHoliday(m, dd);
+          const dn = dd;
+          cells.push({
+            val: v ? v : (within ? "-" : ""),
+            goto: within ? () => this.setState({ tab: "daily", day: dn }) : null,
+            style: "text-align:center;padding:5px 2px;border-bottom:1px solid #F0EBDD;cursor:" + (within ? "pointer" : "default") + ";" +
+              "background:" + (hol ? "#F5F0E5" : (within ? "transparent" : "#FAF7EF")) + ";color:" + (v ? "#2C3A38" : "#C7CCC6") + ";font-weight:" + (v ? "600" : "400") + ";"
+          });
+        }
+        const carry = this.carry(m, s.id), total = this.monthTotal(m, s.id);
+        return { no: i + 1, name: s.name, carryLabel: carry ? this.fmtShort(carry) : "-", totalLabel: this.fmtShort(total), cells };
+      });
+      vals.colTotalCells = [];
+      let grand = 0, carryTotal = 0;
+      d.students.forEach(s => carryTotal += this.carry(m, s.id));
+      for (let dd = 1; dd <= 31; dd++) {
+        const t = this.dayTotalAll(m, dd);
+        vals.colTotalCells.push({
+          val: t ? this.fmtShort(t) : "",
+          style: "background:#FBF6E8;text-align:center;font-weight:700;color:" + (t ? "#2E7D6B" : "#CFC9B6") + ";padding:6px 2px;"
+        });
+      }
+      d.students.forEach(s => grand += this.monthTotal(m, s.id));
+      vals.carryTotalLabel = carryTotal ? this.fmtShort(carryTotal) : "-";
+      vals.grandLabel = this.fmtShort(grand);
+    }
+
+    /* ----- SUMMARY ----- */
+    if (st.tab === "summary") {
+      vals.sumMonthHeaders = this.MONTHS.map(x => x.short);
+      const yearTotals = d.students.map(s => this.yearTotal(s.id));
+      const grandYear = yearTotals.reduce((a, b) => a + b, 0);
+      vals.grandYearLabel = this.fmt(grandYear);
+      vals.grandYearShort = this.fmtShort(grandYear);
+      let topI = -1, topV = -1;
+      yearTotals.forEach((v, i) => { if (v > topV) { topV = v; topI = i; } });
+      vals.topName = (topI >= 0 && topV > 0) ? d.students[topI].name : "—";
+      vals.topLabel = topV > 0 ? this.fmt(topV) : "ยังไม่มีข้อมูล";
+      vals.sumRows = d.students.map((s, i) => {
+        const cells = this.MONTHS.map((mm, mi) => {
+          const v = this.depSum(mi, s.id);
+          return { val: v ? this.fmtShort(v) : "", style: "text-align:center;padding:6px 4px;border-bottom:1px solid #F0EBDD;color:" + (v ? "#3A4744" : "#D2D7D1") + ";" };
+        });
+        return { no: i + 1, name: s.name, cells, totalLabel: this.fmtShort(yearTotals[i]) };
+      });
+      vals.sumColTotals = this.MONTHS.map((mm, mi) => {
+        let t = 0; d.students.forEach(s => t += this.depSum(mi, s.id)); return this.fmtShort(t);
+      });
+    }
+
+    /* ----- SETTINGS ----- */
+    if (st.tab === "settings") {
+      const sc = d.school;
+      const mk = (key, label) => ({
+        label, value: sc[key],
+        onChange: (e) => { const v = e.target.value; this.mutate(() => { sc[key] = v; }); }
+      });
+      vals.schoolFields = [
+        mk("name", "ชื่อโรงเรียน"), mk("classLevel", "ระดับชั้น"), mk("year", "ปีการศึกษา"),
+        mk("office", "สังกัด"), mk("teacher", "ครูประจำชั้น"), mk("director", "ผู้อำนวยการสถานศึกษา")
+      ];
+      vals.studentCount = d.students.length;
+      vals.importing = !!st.importing;
+      vals.importLabel = st.importing ? "กำลังอ่านไฟล์…" : "นำเข้าจาก Excel";
+      vals.triggerImport = () => this.triggerImport();
+      vals.onImportFile = (e) => this.onImportFile(e);
+      vals.setFileRef = (el) => { this._fileInput = el; };
+      vals.importBtnStyle = "border:1.5px solid " + ac + ";background:#fff;color:" + acDark +
+        ";border-radius:11px;padding:9px 14px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;" +
+        (st.importing ? "opacity:.6;pointer-events:none;" : "");
+      vals.newName = st.newName;
+      vals.onNewName = (e) => this.setState({ newName: e.target.value });
+      vals.onNewKey = (e) => { if (e.key === "Enter") { e.preventDefault(); this.addStudentByName(); } };
+      vals.addStudent = () => this.addStudentByName();
+      vals.studentRows = d.students.map((s, i) => ({
+        no: i + 1, name: s.name,
+        setName: (e) => { const v = e.target.value; this.mutate(() => { s.name = v; }); },
+        up: () => { if (i > 0) this.mutate(() => { const a = d.students; const t = a[i - 1]; a[i - 1] = a[i]; a[i] = t; }); },
+        down: () => { if (i < d.students.length - 1) this.mutate(() => { const a = d.students; const t = a[i + 1]; a[i + 1] = a[i]; a[i] = t; }); },
+        del: () => { if (confirm("ลบ " + s.name + " ?")) this.mutate(() => { d.students = d.students.filter(x => x.id !== s.id); }); }
+      }));
+      vals.resetSample = () => { if (confirm("คืนค่าข้อมูลตัวอย่างทั้งหมด? ข้อมูลปัจจุบันจะถูกแทนที่")) { this.data = this.seed(); this.persist(); this.forceUpdate(); } };
+      vals.clearAll = () => { if (confirm("ล้างข้อมูลการออมทั้งหมด? (รายชื่อและข้อมูลโรงเรียนยังอยู่)")) this.mutate(() => { d.entries = {}; d.holidays = {}; }); };
+      // PIN management
+      vals.hasPin = hasPin;
+      vals.pinStepNull = pinStepNull;
+      vals.pinStepActive = pinStepActive;
+      vals.pinStatusLabel = hasPin ? "ตั้งรหัสลับห้องเรียนไว้แล้ว — sync ทุกเครื่องอัตโนมัติ" : "ยังไม่ได้ตั้งรหัสลับ — ทุกคนสามารถเข้าใช้งานได้";
+      vals.setPinLabel = hasPin ? "เปลี่ยนรหัสลับ" : "ตั้งรหัสลับห้องเรียน";
+      vals.pinStepLabel = pinStepLabels[st.pinStep] || "";
+      vals.pinFieldValue = pinFieldVal;
+      vals.onPinField = onPinFieldChange;
+      vals.onPinFieldKey = (e) => { if (e.key === "Enter") this.submitSetPin(); };
+      vals.pinMsg = st.pinMsg;
+      vals.pinMsgStyle = "font-size:13px;min-height:18px;color:" + (st.pinMsg.indexOf("แล้ว") >= 0 ? "#2E7D6B" : "#C8786A") + ";font-weight:600;";
+      vals.startSetPin = () => this.startSetPin();
+      vals.submitSetPin = () => this.submitSetPin();
+      vals.cancelSetPin = () => this.setState({ pinStep: null, pinMsg: "", pinOld: "", pinNew: "", pinConfirm: "" });
+      vals.removePin = () => this.removePin();
+      vals.logout = () => this.logout();
+    }
+
+    return vals;
+  }
+}
+</script>
+</body>
+</html>
